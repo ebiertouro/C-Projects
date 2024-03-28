@@ -4,69 +4,95 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Assignment4
+namespace Assignment5
 {
+
+    public static class SaleExtension
+    {
+        public static IEnumerable<Sale> WherePriceOver(this IEnumerable<Sale> sales, double price)
+        {
+            return sales.Where(sale => sale.PricePerItem > price);
+        }
+
+        public static IEnumerable<Sale> WhereQuantityOne(this IEnumerable<Sale> sales)
+        {
+            return sales.Where(sale => sale.Quantity == 1).OrderByDescending(sale => sale.PricePerItem);
+        }
+
+        public static IEnumerable<Sale> WhereStripedSocksNoExpeditedShipping(this IEnumerable<Sale> sales)
+        {
+            return sales.Where(sale => sale.Item == "Striped Socks" && !sale.ExpeditedShipping);
+        }
+
+        public static IEnumerable<string> TotalOrderOver_Addresses(this IEnumerable<Sale> sales, double cost)
+        {
+            return sales.Where(sale => (sale.PricePerItem * sale.Quantity) > 100).Select(sale => sale.Address);
+        }
+
+        public static IEnumerable<object> CorporateSales(this IEnumerable<Sale> sales)
+        {
+            return sales.Where(sale => sale.Customer.ToUpper().Contains("LLC"))
+                          .Select(sale => new
+                          {
+                              Item = sale.Item,
+                              TotalPrice = sale.PricePerItem * sale.Quantity,
+                              Shipping = sale.Address + (sale.ExpeditedShipping ? " EXPEDITE" : "")
+                          })
+                          .OrderBy(sale => sale.TotalPrice);
+        }
+    }
+
+
+
     class MyProgram
     {
-        static void Main()
+        public static void Main(string[] args)
         {
+     
+
             Sale[] sales =
             {
-                new Sale { Item = "Black Socks", Customer = "Sock Exchange",
-                    PricePerItem = 3.5, Quantity = 120, ExpeditedShipping =  true},
-                new Sale { Item = "White Socks", Customer = "Double Header",
-                    PricePerItem = 2.75, Quantity = 80, ExpeditedShipping =  true},
+                new Sale { Item = "Black Socks", Customer = "Sock Exchange LLC",
+                    PricePerItem = 3.5, Quantity = 120, Address = "3711 Avenue L", ExpeditedShipping =  true},
+                new Sale { Item = "White Socks", Customer = "Double Header LLC",
+                    PricePerItem = 2.75, Quantity = 80, Address = "1317 East 14", ExpeditedShipping =  true},
                 new Sale { Item = "Striped Socks", Customer = "Mrs. Yolanda Benitz",
-                    PricePerItem = 1.66, Quantity = 1, ExpeditedShipping =  false},
-                new Sale { Item = "Black Socks", Customer = "Toetaly You",
-                    PricePerItem = 3.5, Quantity = 300, ExpeditedShipping =  true},
+                    PricePerItem = 1.66, Quantity = 1, Address = "1412 East 18", ExpeditedShipping =  false},
+                new Sale { Item = "Black Socks", Customer = "Toetaly You LLC",
+                    PricePerItem = 3.5, Quantity = 300, Address = "512 Madison Drive", ExpeditedShipping =  true},
+                new Sale {Item = "Customized Slippers", Customer = "Mr. Dave Feuer",
+                    PricePerItem = 15.79, Quantity = 2, Address = "36 Consiounstraat", ExpeditedShipping = false}
             };
-  
-            double profit1 = totalProfit(sales,
-                sale => sale.ExpeditedShipping == true,
-                sale => (sale.PricePerItem * sale.Quantity) + 12.95,
-                (sale, profit) => Console.WriteLine($"{sale.Customer}'s order is eligible for " +
-                $"expedited shipping at a profit of {profit.ToString("C")}."),
-                sale => Console.WriteLine($"{sale.Customer}'s order is not eligible for expedited shipping.")
-                ) ;
 
-            Console.WriteLine();
-            Console.WriteLine($"Total profit for expedited-shipping orders: {profit1.ToString("C")}");
-            Console.WriteLine();
+            var SalesOver10 = sales.WherePriceOver(10.0);
+            Console.WriteLine("Sales where price is over $10.00:\n");
+            foreach (var sale in SalesOver10)
+                Console.WriteLine(sale + "\n");
 
-            double profit2 = totalProfit(sales,
-                //determine if the customer is a private purchaser or a retailer
-                sale => sale.Customer.StartsWith("Mrs") || sale.Customer.StartsWith("Mr."),
-                //private purchasers must pay tax, we subtract from profit
-                sale => (sale.PricePerItem * sale.Quantity) - (sale.PricePerItem * sale.Quantity * .08875),
-                (sale, profit) => Console.WriteLine($"A private purchaser bought {sale.Item} for a profit of {profit.ToString("C")}"),
-                sale => Console.WriteLine($"{sale.Item} was bought by a retailer.")
-                );
+            var SalesOfOne = sales.WhereQuantityOne();
+            Console.WriteLine("Sales where quantity is one:\n");
+            foreach (var sale in SalesOfOne)
+                Console.WriteLine(sale + "\n");
 
-            Console.WriteLine();
-            Console.WriteLine($"Total profit for private orders: {profit2.ToString("C")}");
+            var StrippedSockSales = sales.WhereStripedSocksNoExpeditedShipping();
+            Console.WriteLine("Stripped sock sales (no expedited shipping):\n");
+            foreach (var sale in StrippedSockSales)
+                Console.WriteLine(sale + "\n");
+
+            var Adddresses = sales.TotalOrderOver_Addresses(100);
+            Console.WriteLine("Addresses of orders over $100 total:\n");
+            foreach (var address in Adddresses)
+                Console.WriteLine(address + "\n");
+
+            var CorporateSales = sales.CorporateSales();
+            Console.WriteLine("Corporate sales:\n");
+            foreach (var sale in CorporateSales)
+                Console.WriteLine(sale + "\n");
+
             Console.ReadLine();
         }
 
-        static double totalProfit(Sale[] sales, Func<Sale, bool> toInclude, 
-                                    Func<Sale, double> saleProfit, Action<Sale, double> profitAction,
-                                    Action<Sale> nonIncludedAction)
-        {
-            double totalProfit = 0;
 
-            foreach(Sale sale in sales)
-            {
-                if (toInclude(sale))
-                {
-                    double itemProfit = saleProfit(sale);
-                    profitAction(sale, itemProfit);
-                    totalProfit += itemProfit;
-                }
-                else
-                    nonIncludedAction(sale);
-
-            }
-            return totalProfit;
-        }
     }
 }
+

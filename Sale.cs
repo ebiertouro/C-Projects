@@ -4,15 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Assignment3
+namespace Assignment5
 {
     public class Sale
     {
-        public string Item { get; set; }
-        public string Customer { get; set; }
+        public String Item { get; set; }
+        public String Customer { get; set; }
         public double PricePerItem { get; set; }
         public int Quantity { get; set; }
-        public string Address { get; set; }
+        public String Address { get; set; }
         public bool ExpeditedShipping { get; set; }
+        public override string ToString()
+        {
+            return $"Item: {Item}, Customer: {Customer}, PricePerItem: {PricePerItem}, Quantity: {Quantity}, Address: {Address}, ExpeditedShipping: {ExpeditedShipping}";
+        }
+
     }
 }
